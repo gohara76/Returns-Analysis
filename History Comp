@@ -1,0 +1,38 @@
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns 
+sns.set()
+%matplotlib inline
+
+#load returns
+ret = pd.read_csv('SP History2.csv')
+
+#enter inputs
+L=len(ret)
+months=int(input("Enter the number of years to use as a lookback period "))*12
+pL=int(input("Enter lower percentile for comparison "))/100
+pH=int(input("Enter upper percentile for comparison "))/100
+start=(input("Enter start date in format m/dd/yyyy "))
+#adjust for end
+
+#create df of every possible period of (months) in the file
+df = pd.DataFrame()
+for x in range(0,L-months):
+    df[str(ret.Date[x])] = ret.iloc[x:x+months]["Returns"].values
+df.iloc[0,:] = 0
+
+#Create VAMI df for each period
+VAMI=(df+1).cumprod()
+
+#Create Attributes df describing VAMI
+attributes = pd.DataFrame()
+attributes["mean"]=VAMI.mean(axis=1)
+attributes["high"]=VAMI.quantile(pH, axis=1)
+attributes["low"]=VAMI.quantile(pL, axis=1)
+
+#Plot chosen period against chosen percentiles
+plt.plot(attributes.index,attributes["mean"])
+plt.plot(attributes.index, attributes["high"])
+plt.plot(attributes.index, attributes["low"])
+plt.plot(attributes.index, VAMI[str(start)])
